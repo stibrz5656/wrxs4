@@ -8,11 +8,11 @@
  <div class="unit">km/h</div>
  <span id="stop-status" class="highlight">判定中</span>
  <div class="data-box" id="data-area" style="display: none;">
- <span class="label">揺れ</span>
+ <span class="label">今の揺れ</span>
  <span id="val-total" class="highlight">0.00</span>
-</center>
 <div id="webcam-container"></div>
 <div id="label-container"></div>
+</center>
 <div id="warning-message">止まれ！</div>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
@@ -30,10 +30,9 @@
   #speed {font-size: 50px; font-weight: bold; color:rgb(0, 0, 0)}
   .unit  {font-size: 30px; }
   #stop-status,#higilight {font-size: 50px; font-weight: bold; color:rgb(0, 0, 0)}
-#webcam-container {
-  display: block;
-  text-align: center;
-  margin-top: 20px;
+  #webcam-container {
+    display: flex;
+    justify-content: center; /* 左右中央 */
 }
 
 /* カメラ映像のサイズ調整（任意） */
@@ -53,6 +52,7 @@
       border-radius: 10px;
       white-space: nowrap;
       /* 画面のど真ん中に強制的に配置する魔法のコード */
+      position: fixed;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
