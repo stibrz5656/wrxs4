@@ -51,7 +51,7 @@
 }
 #status-box {
     position: fixed;
-    top: 10px;
+    top: 180px;
     right: 10px;
 
     background: rgba(255,255,255,0.9);
@@ -176,14 +176,6 @@
             // ※「止まれ」という文字は、Teachable Machineで学習させた時の名前と完全に同じにしてください！
             if (prediction[i].className === "止まれ" && prediction[i].probability > 0.8) {
                 isStopDetected = true; // 80%以上なら目印をONにする
-                // MP3ファイルを読み込む
-const audio = new Audio("stop.mp3");
-
-// 再生する関数
-function playMp3() {
-    audio.currentTime = 0; // 最初から再生
-    audio.play();
-}
 }  
  }
         // すべての判定が終わった後に、画面の表示を切り替える
