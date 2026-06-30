@@ -138,7 +138,7 @@ document.getElementById("lastModified").textContent =
     String(d.getMinutes()).padStart(2, "0");
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let hasPlayed = false;
+let stopDetectedBefore = false;
 
 function beep(freq, duration, startTime) {
     const osc = audioCtx.createOscillator();
@@ -249,19 +249,20 @@ function playWarningSound() {
     // 警告表示
     document.getElementById("warning-message").style.display = "block";
 
-    // 初回検知時だけ警告音を鳴らす
-    if (!hasPlayed) {
+    // 「未検知 → 検知」に変わった瞬間だけ鳴らす
+    if (!stopDetectedBefore) {
         playWarningSound();
-        hasPlayed = true;
     }
+
+    stopDetectedBefore = true;
 
 } else {
 
     // 警告を消す
     document.getElementById("warning-message").style.display = "none";
 
-    // 次回検知時に再び鳴らせるようにする
-    hasPlayed = false;
+    // 標識が見えなくなったらリセット
+    stopDetectedBefore = false;
 }
     }
   if (navigator.geolocation) {
