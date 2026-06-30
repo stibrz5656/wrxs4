@@ -110,6 +110,45 @@
 
 
 <script type="text/javascript">
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let hasPlayed = false;
+
+function beep(freq, duration, startTime) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = "square";
+    osc.frequency.setValueAtTime(freq, startTime);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    // クリックノイズ防止
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.linearRampToValueAtTime(0.25, startTime + 0.002);
+
+    gain.gain.setValueAtTime(0.25, startTime + duration - 0.005);
+    gain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
+
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+}
+
+function playWarningSound() {
+    const start = audioCtx.currentTime;
+
+    // ピッの回数を1～10回でランダム
+    const count = Math.floor(Math.random() * 10) + 1;
+
+    // ピッ
+    for (let i = 0; i < count; i++) {
+        beep(2217.461, 0.10, start + i * 0.19);
+    }
+
+    // 最後のピー（3秒）
+    beep(2217.461, 3.0, start + count * 0.19);
+}
+
     function requestAccess() {
     // 2つ目のボタンの要素を取得
     const nextBtn = document.getElementById("start-button");
@@ -178,18 +217,25 @@
                 isStopDetected = true; // 80%以上なら目印をONにする
 }  
  }
-        // すべての判定が終わった後に、画面の表示を切り替える
-        if (isStopDetected === true) {
-            // 見つかったら、警告メッセージを表示する（block）
-            document.getElementById("warning-message").style.display = "block";
-        
-        }
+       if (isStopDetected) {
 
-        else {
-            // 見つからなかったら、隠す（none）
-            document.getElementById("warning-message").style.display = "none";
-            
-        }
+    // 警告表示
+    document.getElementById("warning-message").style.display = "block";
+
+    // 初回検知時だけ警告音を鳴らす
+    if (!hasPlayed) {
+        playWarningSound();
+        hasPlayed = true;
+    }
+
+} else {
+
+    // 警告を消す
+    document.getElementById("warning-message").style.display = "none";
+
+    // 次回検知時に再び鳴らせるようにする
+    hasPlayed = false;
+}
     }
   if (navigator.geolocation) {
       // 速度・位置情報の更新を監視
