@@ -6,7 +6,7 @@
  <button id="start-button" style="display: none;" onclick="init()">開始</button>
 </center>
 <div id="status-box">
-    <div id="speed">0.0</div>
+    <div id="speed">--</div>
     <div class="unit">km/h</div>
 
     <span id="stop-status" class="highlight">判定中</span>
@@ -141,30 +141,22 @@ document.getElementById("lastModified").textContent =
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let hasPlayed = false;
 
-// 電子音（3音重ね）
+// 電子音（）
 function playBeep() {
     const now = audioCtx.currentTime;
 
     const gain = audioCtx.createGain();
 
     const osc1 = audioCtx.createOscillator();
-    const osc2 = audioCtx.createOscillator();
-    const osc3 = audioCtx.createOscillator();
 
     // 電子音らしい音色
     osc1.type = "square";
-    osc2.type = "square";
-    osc3.type = "square";
 
     // 周波数
     osc1.frequency.setValueAtTime(2217.461, now); // メイン
-    osc2.frequency.setValueAtTime(2250.000, now); // 少し高い
-    osc3.frequency.setValueAtTime(2185.000, now); // 少し低い
 
     // 接続
     osc1.connect(gain);
-    osc2.connect(gain);
-    osc3.connect(gain);
     gain.connect(audioCtx.destination);
 
     // クリックノイズ防止
@@ -175,12 +167,8 @@ function playBeep() {
 
     // 再生
     osc1.start(now);
-    osc2.start(now);
-    osc3.start(now);
-
     osc1.stop(now + 0.300);
-    osc2.stop(now + 0.300);
-    osc3.stop(now + 0.300);
+
 }
 
     function requestAccess() {
@@ -196,6 +184,8 @@ function playBeep() {
     const URL = "https://teachablemachine.withgoogle.com/models/_2ZlDZ7MH/";
 
     let model, webcam, labelContainer, maxPredictions;
+    let lastPredict = 0;
+    const PREDICT_INTERVAL = 100; // 100msごと（10回/秒）
 
     // Load the image model and setup the webcam
     async function init() {
@@ -213,7 +203,7 @@ function playBeep() {
 
         // Convenience function to setup a webcam
         const flip = false ; // whether to flip the webcam
-        webcam = new tmImage.Webcam(500,500, flip) // width, height, flip
+        webcam = new tmImage.Webcam(320,320, flip) // width, height, flip
         
 
         await webcam.setup({ facingMode: "environment" }); // request access to the webcam
@@ -229,10 +219,20 @@ function playBeep() {
     }
 
     async function loop() {
-        webcam.update(); // update the webcam frame
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
+    webcam.update();
+
+    const now = performance.now();
+
+    if (
+    speedKmh >= 5 &&
+    now - lastPredict >= PREDICT_INTERVAL
+) {
+    await predict();
+    lastPredict = now;
+}
+
+    window.requestAnimationFrame(loop);
+}
 
     // run the webcam image through the image model
     async function predict() {
@@ -329,7 +329,6 @@ function playBeep() {
       document.getElementById("start-button").style.display = "block";
       document.getElementById("data-area").style.display = "block";
 
-      speak("測定を開始します、実際の交通ルールに従って走行してください");
     }
 
 function handleMotion(event) {
