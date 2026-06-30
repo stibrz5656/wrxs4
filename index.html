@@ -137,43 +137,50 @@ document.getElementById("lastModified").textContent =
     String(d.getHours()).padStart(2, "0") + ":" +
     String(d.getMinutes()).padStart(2, "0");
 
+    // AudioContext（最初に1回だけ作成）
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let stopDetectedBefore = false;
+let hasPlayed = false;
 
-function beep(freq, duration, startTime) {
-    const osc = audioCtx.createOscillator();
+// 電子音（3音重ね）
+function playBeep() {
+    const now = audioCtx.currentTime;
+
     const gain = audioCtx.createGain();
 
-    osc.type = "square";
-    osc.frequency.setValueAtTime(freq, startTime);
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const osc3 = audioCtx.createOscillator();
 
-    osc.connect(gain);
+    // 電子音らしい音色
+    osc1.type = "square";
+    osc2.type = "square";
+    osc3.type = "square";
+
+    // 周波数
+    osc1.frequency.setValueAtTime(2217.461, now); // メイン
+    osc2.frequency.setValueAtTime(2250.000, now); // 少し高い
+    osc3.frequency.setValueAtTime(2185.000, now); // 少し低い
+
+    // 接続
+    osc1.connect(gain);
+    osc2.connect(gain);
+    osc3.connect(gain);
     gain.connect(audioCtx.destination);
 
     // クリックノイズ防止
-    gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.linearRampToValueAtTime(0.25, startTime + 0.002);
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.06, now + 0.003);
+    gain.gain.setValueAtTime(0.06, now + 0.297);
+    gain.gain.linearRampToValueAtTime(0, now + 0.300);
 
-    gain.gain.setValueAtTime(0.25, startTime + duration - 0.005);
-    gain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
+    // 再生
+    osc1.start(now);
+    osc2.start(now);
+    osc3.start(now);
 
-    osc.start(startTime);
-    osc.stop(startTime + duration);
-}
-
-function playWarningSound() {
-    const start = audioCtx.currentTime;
-
-    // ピッの回数を1～10回でランダム
-    const count = Math.floor(Math.random() * 10) + 1;
-
-    // ピッ
-    for (let i = 0; i < count; i++) {
-        beep(2217.461, 0.10, start + i * 0.19);
-    }
-
-    // 最後のピー（3秒）
-    beep(2217.461, 3.0, start + count * 0.19);
+    osc1.stop(now + 0.300);
+    osc2.stop(now + 0.300);
+    osc3.stop(now + 0.300);
 }
 
     function requestAccess() {
@@ -246,23 +253,20 @@ function playWarningSound() {
  }
        if (isStopDetected) {
 
+        
     // 警告表示
     document.getElementById("warning-message").style.display = "block";
-
-    // 「未検知 → 検知」に変わった瞬間だけ鳴らす
-    if (!stopDetectedBefore) {
-        playWarningSound();
+    if (!hasPlayed) {
+        playBeep();
+        hasPlayed = true;
     }
 
-    stopDetectedBefore = true;
-
-} else {
+    
+  } else {
 
     // 警告を消す
     document.getElementById("warning-message").style.display = "none";
-
-    // 標識が見えなくなったらリセット
-    stopDetectedBefore = false;
+    hasPlayed = false;
 }
     }
   if (navigator.geolocation) {
