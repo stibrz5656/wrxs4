@@ -19,6 +19,9 @@
 <div id="webcam-container"></div>
 <div id="label-container"></div>
 <div id="warning-message">止まれ！</div>
+<div id="last-update">
+    最終更新：<span id="lastModified"></span>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 <meta name="viewport" content="width=device-width">
@@ -105,12 +108,36 @@
       transform: translate(-50%, -50%);
       z-index: 100; /* カメラより手前に出す */
   }
+#last-update {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+
+    text-align: center;
+    padding: 8px 0;
+
+    font-size: 14px;
+    z-index: 9999;
+}  
   </style>
 </head>
 
 
 <script type="text/javascript">
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const d = new Date(document.lastModified);
+
+document.getElementById("lastModified").textContent =
+    d.getFullYear() + "/" +
+    String(d.getMonth() + 1).padStart(2, "0") + "/" +
+    String(d.getDate()).padStart(2, "0") + " " +
+    String(d.getHours()).padStart(2, "0") + ":" +
+    String(d.getMinutes()).padStart(2, "0");
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let hasPlayed = false;
 
 function beep(freq, duration, startTime) {
