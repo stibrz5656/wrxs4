@@ -141,6 +141,7 @@ document.getElementById("lastModified").textContent =
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let hasPlayed = false;
 let stopSignDetected = false;
+let stopCompleteUntil = 0;
 
 // 電子音（）
 function playBeep() {
@@ -348,9 +349,12 @@ function handleMotion(event) {
 
     const total = Math.sqrt(x*x + y*y + z*z);
 
-    document.getElementById("val-total").textContent =
-        total.toFixed(2);
+ // 一時停止完了を3秒間表示
+if (Date.now() < stopCompleteUntil) {
+    return;
+}
 
+document.getElementById("val-total").textContent = total.toFixed(2);
     const isStill =
         speedKmh <= STOP_SPEED &&
         total <= STOP_ACCEL;
@@ -363,12 +367,14 @@ function handleMotion(event) {
 
         if (Date.now() - stopStartTime >= STOP_TIME) {
 
-            if (stopSignDetected) {
+           if (stopSignDetected) {
 
     document.getElementById("stop-status").textContent = "一時停止完了";
     document.getElementById("stop-status").style.color = "green";
 
-    // 次の標識に備えてリセット
+    // 3秒間表示を固定
+    stopCompleteUntil = Date.now() + 1500;
+
     stopSignDetected = false;
 
 } else {
