@@ -184,8 +184,6 @@ function playBeep() {
     const URL = "https://teachablemachine.withgoogle.com/models/_2ZlDZ7MH/";
 
     let model, webcam, labelContainer, maxPredictions;
-    let lastPredict = 0;
-    const PREDICT_INTERVAL = 100; // 100msごと（10回/秒）
 
     // Load the image model and setup the webcam
     async function init() {
@@ -220,7 +218,8 @@ function playBeep() {
 
     async function loop() {
     webcam.update();
-
+       await predict();
+        window.requestAnimationFrame(loop);
     const now = performance.now();
 
     if (
@@ -231,7 +230,6 @@ function playBeep() {
     lastPredict = now;
 }
 
-    window.requestAnimationFrame(loop);
 }
 
     // run the webcam image through the image model
