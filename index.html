@@ -187,9 +187,9 @@ function playBeep() {
     let model, webcam, labelContainer, maxPredictions;
     let speedKmh = 0;
     let stopStartTime = null;
-    const STOP_SPEED = 2.0;      // km/h
-    const STOP_ACCEL = 0.2;      // m/s²
-    const STOP_TIME = 1000;      // 1秒
+    const STOP_SPEED = 5.0;      // km/h
+    const STOP_ACCEL = 0.5;      // m/s²
+    const STOP_TIME = 0.8;      // 1秒
 
     // Load the image model and setup the webcam
     async function init() {
@@ -379,12 +379,18 @@ function handleMotion(event) {
             document.getElementById("stop-status").style.color = "green";
         }
 
-    } else {
+   } else {
+
+    // 少し動いた程度では停止を解除しない
+    if (speedKmh > 6 || total > 0.8) {
 
         stopStartTime = null;
 
         document.getElementById("stop-status").textContent = "走行中";
         document.getElementById("stop-status").style.color = "red";
+
     }
+
+}
 }
 </script>
