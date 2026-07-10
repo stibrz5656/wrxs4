@@ -140,6 +140,7 @@ document.getElementById("lastModified").textContent =
     // AudioContext（最初に1回だけ作成）
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 let hasPlayed = false;
+let stopSignDetected = false;
 
 // 電子音（）
 function playBeep() {
@@ -167,7 +168,7 @@ function playBeep() {
 
     // 再生
     osc1.start(now);
-    osc1.stop(now + 0.300);
+    osc1.stop(now + 5);
 
 }
 
@@ -184,6 +185,11 @@ function playBeep() {
     const URL = "https://teachablemachine.withgoogle.com/models/_2ZlDZ7MH/";
 
     let model, webcam, labelContainer, maxPredictions;
+    let speedKmh = 0;
+    let stopStartTime = null;
+    const STOP_SPEED = 2.0;      // km/h
+    const STOP_ACCEL = 0.2;      // m/s²
+    const STOP_TIME = 1000;      // 1秒
 
     // Load the image model and setup the webcam
     async function init() {
@@ -201,7 +207,7 @@ function playBeep() {
 
         // Convenience function to setup a webcam
         const flip = false ; // whether to flip the webcam
-        webcam = new tmImage.Webcam(320,320, flip) // width, height, flip
+        webcam = new tmImage.Webcam(160, 224, false);// width, height, flip
         
 
         await webcam.setup({ facingMode: "environment" }); // request access to the webcam
@@ -216,11 +222,18 @@ function playBeep() {
         }
     }
 
-    async function loop() {
+let frameCount = 0;
+
+async function loop() {
     webcam.update();
-       await predict();
-        window.requestAnimationFrame(loop);
-    const now = performance.now();
+
+    frameCount++;
+
+    if (frameCount % 5 === 0) {
+        await predict();
+    }
+
+    requestAnimationFrame(loop);
 
     if (
     speedKmh >= 5 &&
@@ -249,20 +262,19 @@ function playBeep() {
                 isStopDetected = true; // 80%以上なら目印をONにする
 }  
  }
-       if (isStopDetected) {
+ if (isStopDetected) {
 
-        
-    // 警告表示
+    stopSignDetected = true;
+
     document.getElementById("warning-message").style.display = "block";
+
     if (!hasPlayed) {
         playBeep();
         hasPlayed = true;
     }
 
-    
-  } else {
+} else {
 
-    // 警告を消す
     document.getElementById("warning-message").style.display = "none";
     hasPlayed = false;
 }
@@ -278,18 +290,17 @@ function playBeep() {
       alert("このブラウザはGPSに対応していません。");
     }
 
-    function success(position) {
-      // 取得できる速度(speed)の単位は「メートル/秒(m/s)」
-      let speedMps = position.coords.speed;
-      
-      if (speedMps !== null) {
-        // km/h に変換 (m/s * 3.6)
-        let speedKmh = speedMps * 3.6;
-        document.getElementById('speed').textContent = speedKmh.toFixed(1);
-      } else {
-        document.getElementById('speed').textContent = "0.0";
-      }
+function success(position) {
+
+    if (position.coords.speed != null) {
+        speedKmh = position.coords.speed * 3.6;
+    } else {
+        speedKmh = 0;
     }
+
+    document.getElementById("speed").textContent =
+        speedKmh.toFixed(1);
+}
 
     function error(err) {
       console.warn(`ERROR(${err.code}): ${err.message}`);
@@ -330,22 +341,50 @@ function playBeep() {
     }
 
 function handleMotion(event) {
-  let x = event.acceleration.x || 0;
-  let y = event.acceleration.y || 0;
-  let z = event.acceleration.z || 0;
 
-  // 加速度の大きさ
-  let total = Math.sqrt(x * x + y * y + z * z);
+    const x = event.acceleration.x || 0;
+    const y = event.acceleration.y || 0;
+    const z = event.acceleration.z || 0;
 
-  document.getElementById("val-total").innerText = total.toFixed(2);
+    const total = Math.sqrt(x*x + y*y + z*z);
 
-  // 停止判定（しきい値は必要に応じて調整）
-  const threshold = 0.2;
+    document.getElementById("val-total").textContent =
+        total.toFixed(2);
 
-  if (total < threshold) {
-    document.getElementById("stop-status").innerText = "停止";
-  } else {
-    document.getElementById("stop-status").innerText = "走行中";
-  }
+    const isStill =
+        speedKmh <= STOP_SPEED &&
+        total <= STOP_ACCEL;
+
+    if (isStill) {
+
+        if (stopStartTime === null) {
+            stopStartTime = Date.now();
+        }
+
+        if (Date.now() - stopStartTime >= STOP_TIME) {
+
+            if (stopSignDetected) {
+
+    document.getElementById("stop-status").textContent = "一時停止完了";
+    document.getElementById("stop-status").style.color = "green";
+
+    // 次の標識に備えてリセット
+    stopSignDetected = false;
+
+} else {
+
+    document.getElementById("stop-status").textContent = "停止";
+    document.getElementById("stop-status").style.color = "blue";
+}
+            document.getElementById("stop-status").style.color = "green";
+        }
+
+    } else {
+
+        stopStartTime = null;
+
+        document.getElementById("stop-status").textContent = "走行中";
+        document.getElementById("stop-status").style.color = "red";
+    }
 }
 </script>
